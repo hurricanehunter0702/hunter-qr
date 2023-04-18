@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<head>
+    <script type="text/javascript" src="js/instascan.min.js"></script>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div id="container">
+        <video id="qrscanner"></video>
+        <h1 id="eventname" class="info"></h1>
+        <h2 id="firstname" class="info"></h2>
+        <h2 id="lastname" class="info"></h2>
+        <h2 id="email" class="info"></h2>
+        <h2 id="organization" class="info"></h2>
+        <div id="checkin">
+            <h2 id="checkinText">Check In</h3>
+        </div>
+    </div>
+    
+
+    <script type="text/javascript">
+    let params = (new URL(document.location)).searchParams;
+    let eventNameValue = params.get("eventName");
+    let eventIdValue = params.get("eventId");
+
+    var eventName = document.getElementById("eventname");
+    eventName.innerHTML = eventNameValue;
+
+    let scanner = new Instascan.Scanner({video: document.getElementById('qrscanner'), mirror:false});
+    scanner.addListener('scan', function (content) {
+        var firstname = document.getElementById("firstname");
+        var lastname = document.getElementById("lastname");
+        var email = document.getElementById("email");
+        var organization = document.getElementById("organization");
+
+        var jsonContent = JSON.parse(content);
+        firstname.innerHTML = jsonContent.firstname;
+        lastname.innerHTML = jsonContent.lastname;
+        email.innerHTML = jsonContent.email;
+        organization.innerHTML = jsonContent.organization;
+
+        var checkInButton = document.getElementById("checkin");
+        checkInButton.onclick = function () {
+            checkIn(jsonContent.id, eventIdValue, "/event");
+            window.location = "events.html";
+        }
+    });
+    Instascan.Camera.getCameras().then(function(cameras) {
+        if (cameras.length > 0) {
+            var selectedCam = cameras[1];
+            scanner.start(selectedCam);
+        } else {
+            console.error('No cameras');
+        }
+    }).catch(function (e) {
+        console.error(e);
+    })
+
+    const checkIn = async(attendeeid, eventid, httpUrl) => {
+        fetch(httpUrl, {
+            method: "POST",
+            headers: {
+                'Accept': 'application/json',
+                'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                attendeeId: attendeeid,
+                eventId: eventid
+            })
+        }).then((res) => {
+            console.log(res);
+        })
+
+    } 
+    </script>
+</body>
+</html>
